@@ -113,3 +113,12 @@ app.*.map.json
 
 # Generated l10n files
 lib/l10n/gen/
+# ==========================================
+# Repomix (AI Context Bundler - Local Only)
+# ==========================================
+repomix-output.*
+repomix.config.json
+.repomixignore
+node_modules/
+package.json
+package-lock.json
