@@ -2,11 +2,33 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
+	<!-- Hardware & Sensor Usage Descriptions -->
+	<key>NSMicrophoneUsageDescription</key>
+	<string>BeaconAI requires microphone access to listen to your voice commands, queries, and audio notes.</string>
+	<key>NSSpeechRecognitionUsageDescription</key>
+	<string>BeaconAI uses speech recognition to convert your spoken words into instant system actions and prompts.</string>
+	<key>NSCameraUsageDescription</key>
+	<string>BeaconAI uses the camera to provide spatial understanding, object recognition, and visual assistance.</string>
+	<key>NSLocationWhenInUseUsageDescription</key>
+	<string>BeaconAI requires your location to dispatch emergency coordinates to your trusted contacts during SOS triggers.</string>
+
+	<!-- URL Schemes for Direct Calling & WhatsApp (Equivalent to Android <queries>) -->
+	<key>LSApplicationQueriesSchemes</key>
+	<array>
+		<string>tel</string>
+		<string>whatsapp</string>
+		<string>sms</string>
+		<string>https</string>
+	</array>
+
+	<!-- Supported Languages -->
 	<key>CFBundleLocalizations</key>
 	<array>
 		<string>en</string>
 		<string>es</string>
+		<string>ar</string>
 	</array>
+
 	<key>CFBundleDevelopmentRegion</key>
 	<string>$(DEVELOPMENT_LANGUAGE)</string>
 	<key>CFBundleDisplayName</key>
