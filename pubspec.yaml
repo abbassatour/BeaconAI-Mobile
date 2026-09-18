@@ -21,7 +21,7 @@ dependencies:
   flutter_tts: ^4.2.5
   geolocator: ^14.0.3
   http: ^1.6.0
-  intl: ^0.20.2
+  intl: ^0.20.3
   onesignal_flutter: ^5.6.10
   path: ^1.9.1
   path_provider: ^2.1.6
@@ -34,11 +34,11 @@ dependencies:
   url_launcher: ^6.3.2
 
 dev_dependencies:
-  bloc_lint: ^0.4.1
+  bloc_lint: ^0.4.2
   bloc_test: ^10.0.0
   bloc_tools: ^0.1.0-dev.24
   build_runner: 2.15.1
-  drift_dev: 2.34.0
+  drift_dev: 2.35.0
   flutter_test:
     sdk: flutter
   mocktail: ^1.0.5
