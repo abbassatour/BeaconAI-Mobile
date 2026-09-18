@@ -122,3 +122,10 @@ repomix.config.json
 node_modules/
 package.json
 package-lock.json
+
+# ==========================================
+# Environment Variables & Secrets (Local Only)
+# ==========================================
+.env
+.env*.local
+!.env.example
