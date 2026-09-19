@@ -4,6 +4,7 @@ import 'dart:developer';
 import 'package:battery_plus/battery_plus.dart';
 import 'package:beacon_ai/core/repositories/memos_repository.dart';
 import 'package:beacon_ai/core/services/ai_vision_client.dart';
+import 'package:beacon_ai/core/services/briefing_service.dart';
 import 'package:beacon_ai/core/services/camera_service.dart';
 import 'package:beacon_ai/core/services/supabase_service.dart';
 import 'package:geolocator/geolocator.dart';
@@ -16,6 +17,7 @@ enum IntentType {
   battery,
   takeNote,
   readNotes,
+  morningBriefing,
   phoneCall,
   emergencySos,
   visualQuery,
@@ -43,11 +45,13 @@ class IntentRouter {
     SupabaseService? supabaseService,
     CameraService? cameraService,
     AiVisionClient? visionClient,
+    MorningBriefingService? briefingService,
   })  : _battery = battery ?? Battery(),
         _memos = memosRepository ?? MemosRepository.instance,
         _supabase = supabaseService ?? SupabaseService.instance,
         _camera = cameraService ?? CameraService.instance,
-        _vision = visionClient ?? AiVisionClient.instance;
+        _vision = visionClient ?? AiVisionClient.instance,
+        _briefing = briefingService ?? MorningBriefingService.instance;
 
   static final IntentRouter instance = IntentRouter();
 
@@ -56,6 +60,7 @@ class IntentRouter {
   final SupabaseService _supabase;
   final CameraService _camera;
   final AiVisionClient _vision;
+  final MorningBriefingService _briefing;
 
   /// Analyzes spoken [query] and executes the appropriate local or cloud handler.
   Future<IntentResult> dispatch(String query) async {
@@ -126,9 +131,25 @@ class IntentRouter {
       );
     }
 
-    // 5. Direct Phone Calling Intent
+    // 5. Morning Audio Briefing Intent (OneSignal Daily Engagement)
+    if (clean.contains('briefing') ||
+        clean.contains('morning report') ||
+        clean.contains('daily plan') ||
+        clean.contains("today's plan") ||
+        clean.contains('what is my day')) {
+      final text = await _briefing.playMorningBriefing();
+      return IntentResult(
+        type: IntentType.morningBriefing,
+        spokenResponse: text,
+      );
+    }
+
+    // 6. Direct Phone Calling Intent
     if (clean.startsWith('call ') || clean.startsWith('dial ')) {
-      final target = query.replaceFirst(RegExp(r'^(call|dial)\s+', caseSensitive: false), '').trim();
+      final target = query.replaceFirst(
+        RegExp(r'^(call|dial)\s+', caseSensitive: false),
+        '',
+      ).trim();
       final digits = target.replaceAll(RegExp(r'\D'), '');
 
       if (digits.isNotEmpty) {
@@ -147,14 +168,19 @@ class IntentRouter {
       );
     }
 
-    // 6. Emergency Voice SOS Trigger
-    if (clean == 'sos' || clean.contains('emergency') || clean.contains('help me')) {
+    // 7. Emergency Voice SOS Trigger
+    if (clean == 'sos' ||
+        clean.contains('emergency') ||
+        clean.contains('help me')) {
       return _handleEmergencySos();
     }
 
-    // 7. Visual AI Query (Gemini Vision Pipeline)
+    // 8. Visual AI Query (Gemini Multimodal Vision Pipeline)
     if (clean.contains('what is this') ||
         clean.contains('what do you see') ||
+        clean.contains('look at this') ||
+        clean.contains('identify') ||
+        clean.contains('can you see') ||
         clean.contains('describe') ||
         clean.contains('read this') ||
         clean.contains('what color') ||
@@ -163,7 +189,7 @@ class IntentRouter {
       return _handleVisualQuery(query);
     }
 
-    // 8. General conversational fallback (If not a specific system intent)
+    // 9. General conversational fallback
     return IntentResult(
       type: IntentType.generalQuery,
       spokenResponse: 'You asked: $query. I am ready for your next command.',
@@ -173,11 +199,12 @@ class IntentRouter {
   /// Triggers the background camera, captures a silent frame, and sends to Gemini.
   Future<IntentResult> _handleVisualQuery(String query) async {
     final base64Image = await _camera.takeSnapshotBase64();
-    
+
     if (base64Image == null) {
       return const IntentResult(
         type: IntentType.visualQuery,
-        spokenResponse: 'I could not access the camera. Please check permissions.',
+        spokenResponse:
+            'I could not access the camera. Please verify your camera permissions.',
       );
     }
 
