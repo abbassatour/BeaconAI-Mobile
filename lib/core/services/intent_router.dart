@@ -3,6 +3,8 @@
 import 'dart:developer';
 import 'package:battery_plus/battery_plus.dart';
 import 'package:beacon_ai/core/repositories/memos_repository.dart';
+import 'package:beacon_ai/core/services/ai_vision_client.dart';
+import 'package:beacon_ai/core/services/camera_service.dart';
 import 'package:beacon_ai/core/services/supabase_service.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:intl/intl.dart';
@@ -39,15 +41,21 @@ class IntentRouter {
     Battery? battery,
     MemosRepository? memosRepository,
     SupabaseService? supabaseService,
+    CameraService? cameraService,
+    AiVisionClient? visionClient,
   })  : _battery = battery ?? Battery(),
         _memos = memosRepository ?? MemosRepository.instance,
-        _supabase = supabaseService ?? SupabaseService.instance;
+        _supabase = supabaseService ?? SupabaseService.instance,
+        _camera = cameraService ?? CameraService.instance,
+        _vision = visionClient ?? AiVisionClient.instance;
 
   static final IntentRouter instance = IntentRouter();
 
   final Battery _battery;
   final MemosRepository _memos;
   final SupabaseService _supabase;
+  final CameraService _camera;
+  final AiVisionClient _vision;
 
   /// Analyzes spoken [query] and executes the appropriate local or cloud handler.
   Future<IntentResult> dispatch(String query) async {
@@ -144,24 +152,43 @@ class IntentRouter {
       return _handleEmergencySos();
     }
 
-    // 7. Visual AI Query (Reserved for Gemini Vision Pipeline)
+    // 7. Visual AI Query (Gemini Vision Pipeline)
     if (clean.contains('what is this') ||
         clean.contains('what do you see') ||
         clean.contains('describe') ||
         clean.contains('read this') ||
         clean.contains('what color') ||
-        clean.contains('how much is this')) {
-      return IntentResult(
+        clean.contains('how much is this') ||
+        clean.contains('where is')) {
+      return _handleVisualQuery(query);
+    }
+
+    // 8. General conversational fallback (If not a specific system intent)
+    return IntentResult(
+      type: IntentType.generalQuery,
+      spokenResponse: 'You asked: $query. I am ready for your next command.',
+    );
+  }
+
+  /// Triggers the background camera, captures a silent frame, and sends to Gemini.
+  Future<IntentResult> _handleVisualQuery(String query) async {
+    final base64Image = await _camera.takeSnapshotBase64();
+    
+    if (base64Image == null) {
+      return const IntentResult(
         type: IntentType.visualQuery,
-        spokenResponse: 'Analyzing your surroundings with camera vision.',
-        payload: query,
+        spokenResponse: 'I could not access the camera. Please check permissions.',
       );
     }
 
-    // 8. General conversational fallback
+    final answer = await _vision.analyzeImage(
+      query: query,
+      base64Image: base64Image,
+    );
+
     return IntentResult(
-      type: IntentType.generalQuery,
-      spokenResponse: 'You asked: $query. How else may I assist you?',
+      type: IntentType.visualQuery,
+      spokenResponse: answer,
     );
   }
 
@@ -181,7 +208,7 @@ class IntentRouter {
         batteryLevel: batteryLevel,
       );
 
-      return IntentResult(
+      return const IntentResult(
         type: IntentType.emergencySos,
         spokenResponse:
             'Emergency SOS beacon broadcasted with your GPS coordinates.',

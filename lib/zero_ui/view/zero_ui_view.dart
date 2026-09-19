@@ -96,6 +96,11 @@ class ZeroUiView extends StatelessWidget {
               ),
             ],
           ),
+          const SizedBox(height: 16),
+          
+          // The new Live Camera Viewport!
+          const CameraViewport(),
+          
           const Spacer(),
           WaveformIndicator(
             soundLevel: state.soundLevel,
