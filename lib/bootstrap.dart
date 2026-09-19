@@ -3,6 +3,8 @@
 import 'dart:async';
 import 'dart:developer';
 
+import 'package:beacon_ai/core/services/onesignal_service.dart'; // <-- استيراد خدمة الإشعارات
+import 'package:beacon_ai/core/services/revenuecat_service.dart';
 import 'package:beacon_ai/core/services/supabase_service.dart';
 import 'package:bloc/bloc.dart';
 import 'package:flutter/widgets.dart';
@@ -26,8 +28,10 @@ class AppBlocObserver extends BlocObserver {
 Future<void> bootstrap(FutureOr<Widget> Function() builder) async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  // Initialize Supabase Cloud Backend
+  // Initialize Cloud & Engagement Services
   await SupabaseService.initialize();
+  await RevenueCatService.initialize();
+  await OneSignalService.initialize(); // <-- تهيئة OneSignal
 
   FlutterError.onError = (details) {
     log(details.exceptionAsString(), stackTrace: details.stack);

@@ -4,6 +4,7 @@ import 'package:beacon_ai/core/theme/app_theme.dart';
 import 'package:beacon_ai/zero_ui/cubit/zero_ui_cubit.dart';
 import 'package:beacon_ai/zero_ui/cubit/zero_ui_state.dart';
 import 'package:beacon_ai/zero_ui/widgets/widgets.dart';
+import 'package:beacon_ai/subscription/view/paywall_page.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
@@ -86,19 +87,37 @@ class ZeroUiView extends StatelessWidget {
                   letterSpacing: 1.5,
                 ),
               ),
-              IconButton(
-                icon: const Icon(
-                  Icons.visibility_off_rounded,
-                  color: AppTheme.beaconYellow,
-                ),
-                tooltip: 'Switch to Eyes-Free mode',
-                onPressed: context.read<ZeroUiCubit>().toggleDisplayMode,
+              Row(
+                children: [
+                  // زر باقة الـ PRO الجديد
+                  TextButton.icon(
+                    onPressed: () => Navigator.of(context).push(PaywallPage.route()),
+                    icon: const Icon(Icons.workspace_premium_rounded, color: AppTheme.pureBlack, size: 18),
+                    label: const Text(
+                      'PRO',
+                      style: TextStyle(color: AppTheme.pureBlack, fontWeight: FontWeight.bold),
+                    ),
+                    style: TextButton.styleFrom(
+                      backgroundColor: AppTheme.beaconYellow,
+                      padding: const EdgeInsets.symmetric(horizontal: 12),
+                      minimumSize: const Size(0, 36),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  IconButton(
+                    icon: const Icon(
+                      Icons.visibility_off_rounded,
+                      color: AppTheme.beaconYellow,
+                    ),
+                    tooltip: 'Switch to Eyes-Free mode',
+                    onPressed: context.read<ZeroUiCubit>().toggleDisplayMode,
+                  ),
+                ],
               ),
             ],
           ),
           const SizedBox(height: 16),
           
-          // The new Live Camera Viewport!
           const CameraViewport(),
           
           const Spacer(),
