@@ -3,6 +3,7 @@
 import 'dart:async';
 import 'package:beacon_ai/core/audio/sound_controller.dart';
 import 'package:beacon_ai/core/haptics/haptic_manager.dart';
+import 'package:beacon_ai/core/services/intent_router.dart';
 import 'package:beacon_ai/core/services/speech_service.dart';
 import 'package:beacon_ai/core/services/tts_service.dart';
 import 'package:beacon_ai/zero_ui/cubit/zero_ui_state.dart';
@@ -14,10 +15,12 @@ class ZeroUiCubit extends Cubit<ZeroUiState> {
     SoundController? soundController,
     TtsService? ttsService,
     SpeechService? speechService,
+    IntentRouter? intentRouter,
   })  : _haptics = hapticManager ?? HapticManager.instance,
         _sound = soundController ?? SoundController.instance,
         _tts = ttsService ?? TtsService.instance,
         _speech = speechService ?? SpeechService.instance,
+        _router = intentRouter ?? IntentRouter.instance,
         super(const ZeroUiState()) {
     _initTtsListener();
   }
@@ -26,6 +29,7 @@ class ZeroUiCubit extends Cubit<ZeroUiState> {
   final SoundController _sound;
   final TtsService _tts;
   final SpeechService _speech;
+  final IntentRouter _router;
 
   void _initTtsListener() {
     _tts.onCompletion = () {
@@ -37,7 +41,6 @@ class ZeroUiCubit extends Cubit<ZeroUiState> {
 
   /// Triggered as soon as the user presses anywhere on the screen.
   Future<void> onTouchStarted() async {
-    // Immediate audio cutoff for instant responsiveness
     await _sound.stop();
     await _tts.stop();
 
@@ -78,26 +81,23 @@ class ZeroUiCubit extends Cubit<ZeroUiState> {
     emit(state.copyWith(status: ZeroUiStatus.processing));
     await _sound.playProcessingCue();
 
-    // Simulating initial local intent execution before vision/cloud connection
     await _handleCommand(query);
   }
 
   Future<void> _handleCommand(String query) async {
-    // Temporary response mock to verify end-to-end loop
-    await Future<void>.delayed(const Duration(milliseconds: 600));
+    final result = await _router.dispatch(query);
 
-    final reply = 'You said: $query. Beacon AI system is listening.';
     await _haptics.successNotification();
     await _sound.playSuccessCue();
 
     emit(
       state.copyWith(
         status: ZeroUiStatus.speaking,
-        responseText: reply,
+        responseText: result.spokenResponse,
       ),
     );
 
-    await _tts.speak(reply);
+    await _tts.speak(result.spokenResponse);
   }
 
   /// Swiping up repeats the last assistant answer.
@@ -124,6 +124,7 @@ class ZeroUiCubit extends Cubit<ZeroUiState> {
     await _haptics.emergencyAlarmPulse();
     await _sound.playSosAlarm();
     await _tts.speak('Emergency SOS triggered. Help beacon activated.');
+    await _router.dispatch('sos');
   }
 
   @override
