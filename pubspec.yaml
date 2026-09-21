@@ -12,7 +12,7 @@ dependencies:
   battery_plus: ^7.1.1
   bloc: ^9.2.1
   camera: ^0.12.1
-  drift: 2.34.0
+  drift: 2.34.4
   flutter:
     sdk: flutter
   flutter_bloc: ^9.1.1
